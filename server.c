@@ -5,6 +5,7 @@
 #include "server.h"
 #include <fcntl.h>
 #include <sys/socket.h>
+#include <sys/stat.h>
 
 #include <netinet/in.h>
 #include <sys/epoll.h>
@@ -75,37 +76,42 @@ void *runServer(void* value)
                 memset(query, 0, sizeof(query));
                 if (0 < recv(events[i].data.fd, query, BUF_LEN, MSG_NOSIGNAL)) {
                     int start = 0;
+                    int queryLen = strlen(query);
 
                     toLog("query src:   ", query);
 
-                    while(query[start] != '/')
+                    while((query[start] != '/') && (start < queryLen))
                         start++;
 
                     int finish = start;
-                    while((query[finish] != ' ') && (query[finish] != '?'))
+                    while((query[finish] != ' ')
+                          && (query[finish] != '?')
+                          && (finish < queryLen))
                         finish++;
 
                     char queryPath[BUF_LEN];
                     memset(queryPath, 0, sizeof(queryPath));
                     strcat(queryPath, settings->path);
 
-
-                    int queryLen = strlen(queryPath);
-                    strncpy(queryPath + queryLen, query+start, finish-start);
-                    queryPath[queryLen + finish-start] = '\0';
+                    int pathLen = strlen(queryPath);
+                    strncpy(queryPath + pathLen, query+start, finish-start);
+                    queryPath[pathLen + finish-start] = '\0';
 
                     toLog("queryPath: ", queryPath);
 
-                    toLog("queryPath:   ", queryPath);
-
                     FILE *f = fopen(queryPath, "r");
-                    if(f != NULL) {
+                    struct stat statbuf;
+                    stat(queryPath, &statbuf);
+
+                    if((f != NULL) && !S_ISDIR(statbuf.st_mode)) {
+                        toLog("TRY to read:", queryPath);
+
                         char *buf;
-                        ssize_t len;
+                        size_t len;
                         fseek(f, 0, SEEK_END);
                         len = ftell(f);
                         int respLen = strlen(Resp_200);
-                        buf = (char *)malloc(len + respLen + 1);
+                        buf = (char *) malloc(len + respLen + 1);
                         memset(buf, 0, sizeof(len + respLen));
 
                         strcpy(buf, Resp_200);
@@ -119,14 +125,15 @@ void *runServer(void* value)
 
                         send(events[i].data.fd, buf, strlen(buf), MSG_NOSIGNAL);
                     } else {
+                        toLog("WRONG: ", Resp_404);
                         send(events[i].data.fd, Resp_404, strlen(Resp_404), MSG_NOSIGNAL);
                     }
 
                     shutdown(events[i].data.fd, SHUT_RDWR);
                     close(events[i].data.fd);
                 } else if (errno != EAGAIN) {
-                        shutdown(events[i].data.fd, SHUT_RDWR);
-                        close(events[i].data.fd);
+                    shutdown(events[i].data.fd, SHUT_RDWR);
+                    close(events[i].data.fd);
                 }
             }
         }

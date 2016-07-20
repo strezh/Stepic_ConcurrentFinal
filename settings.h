@@ -5,6 +5,7 @@
 #include <stdint.h>
 
 void toLog(char *note, char *buf);
+void toLogLong(char *note, long value);
 
 typedef struct
 {
