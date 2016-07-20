@@ -4,6 +4,8 @@
 #include <string.h>
 #include <stdint.h>
 
+void toLog(char *note, char *buf);
+
 typedef struct
 {
     char *ip;

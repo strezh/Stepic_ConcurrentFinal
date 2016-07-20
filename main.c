@@ -6,14 +6,11 @@
 #include <stdlib.h>
 #include <pthread.h>
 
+
 int main(int argc, char** argv)
 {
     Settings settings;
     parseOpts(argc, argv, &settings);
-
-    printf("IP:   %s\n", settings.ip);
-    printf("Port: %d\n", settings.port);
-    printf("Path: %s\n", settings.path);
 
     pid_t pid = fork();
 

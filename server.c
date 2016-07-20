@@ -76,6 +76,8 @@ void *runServer(void* value)
                 if (0 < recv(events[i].data.fd, query, BUF_LEN, MSG_NOSIGNAL)) {
                     int start = 0;
 
+                    toLog("query src:   ", query);
+
                     while(query[start] != '/')
                         start++;
 
@@ -92,7 +94,9 @@ void *runServer(void* value)
                     strncpy(queryPath + queryLen, query+start, finish-start);
                     queryPath[queryLen + finish-start] = '\0';
 
-                    fprintf(stderr, "queryPath: %s\n", queryPath);
+                    toLog("queryPath: ", queryPath);
+
+                    toLog("queryPath:   ", queryPath);
 
                     FILE *f = fopen(queryPath, "r");
                     if(f != NULL) {
@@ -111,7 +115,8 @@ void *runServer(void* value)
 
                         buf[len + respLen] = '\0';
 
-                        fprintf(stderr, "Buffer_send: %s\n", buf);
+                        toLog("buf send: ", buf);
+
                         send(events[i].data.fd, buf, strlen(buf), MSG_NOSIGNAL);
                     } else {
                         send(events[i].data.fd, Resp_404, strlen(Resp_404), MSG_NOSIGNAL);

@@ -3,6 +3,13 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+void toLog(char *note, char *buf)
+{
+    FILE *f = fopen("/tmp/final.log", "a");
+    fprintf(f, "%s: %s\n", note, buf);
+    fclose(f);
+}
+
 int parseOpts(int argc, char** argv, Settings *settings)
 {
     int option;
@@ -15,12 +22,15 @@ int parseOpts(int argc, char** argv, Settings *settings)
     while ((option = getopt(argc, argv, "h:p:d:")) != -1) {
         switch (option) {
             case 'h':
+                toLog("IP:   ", optarg);
                 settings->ip = optarg;
                 break;
             case 'p':
+                toLog("Port: ", optarg);
                 settings->port = (uint16_t) atoi(optarg);
                 break;
             case 'd':
+                toLog("Path: ", optarg);
                 settings->path = optarg;
                 break;
             default:
